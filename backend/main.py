@@ -1,10 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-#from steam_web_api import Steam
 from bs4 import BeautifulSoup
 from collections import defaultdict
 import requests
 import re
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+steam_api_key = os.getenv("STEAM_API_KEY")
 
 app = FastAPI()
 app.add_middleware(
@@ -15,17 +19,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-
-
 class SteamAPIClient:
     def __init__(self, api_key: str):
         self.api_key = api_key
-        #self.steam = Steam(api_key)
         self.api_url = "https://api.steampowered.com"
         self.game_url = "https://store.steampowered.com/app/"
     
-    # scrapes the top sellers page and returns a list of game names
+    # scrapes the top sellers page and returns a list of games
     def retrieve_top_sellers(self):
         print("Retrieving top sellers...")
         top_sellers = []
@@ -55,7 +55,7 @@ class SteamAPIClient:
         
         return top_sellers
 
-    # retrieves info for top sellers
+    # retrieves info for a single top seller
     def retrieve_game_info(self, top_seller):
         url = f"{self.game_url}{top_seller['id']}"
         response = requests.get(url)
@@ -72,8 +72,7 @@ class SteamAPIClient:
                 rating = 0
             top_seller['rating'] = rating
 
-
-            # get game tags
+            # get game genre tags
             game_tags = [tag.text.strip() for tag in soup.find_all("a", class_="app_tag")]
             top_seller['tags'] = game_tags
 
@@ -89,10 +88,11 @@ class SteamAPIClient:
             else:
                 top_seller['price'] = 0
 
-            
             return top_seller
-            
 
+    # retrieves user owned games
+    def retrieve_user_info(self, user_id):
+        # 
 
 
 
