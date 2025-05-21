@@ -6,6 +6,7 @@ import requests
 import re
 from dotenv import load_dotenv
 import os
+import time
 
 load_dotenv()
 steam_api_key = os.getenv("STEAM_API_KEY")
@@ -24,6 +25,12 @@ class SteamAPIClient:
         self.api_key = api_key
         self.api_url = "https://api.steampowered.com"
         self.game_url = "https://store.steampowered.com/app/"
+        self.total_user_genre_count = 0
+        self.total_user_playtime = 0
+        self.playtime_per_genre = defaultdict(int)
+        self.single_genre_count = defaultdict(int)
+        self.user_game_library = []
+        self.unowned_game_library = []
     
     # scrapes the top sellers page and returns a list of games
     def retrieve_top_sellers(self):
@@ -47,16 +54,34 @@ class SteamAPIClient:
                     image_url = img_tag.get('src') if img_tag else ""
                     if name == 'Steam Deck' or name == 'Valve Index® Headset': # Skip non-games
                         continue
-                    top_sellers.append({"name": name, "id": game_id, "image_url": image_url})
-                print(len(top_sellers))
+                    new_game = {"name": name, "id": game_id, "image_url": image_url}
+                    new_game = self.retrieve_ts_info(new_game)
+                    self.unowned_game_library.append(new_game)
+
+                print(len(self.unowned_game_library))
+                time.sleep(0.5)
             else:
                 print(f"Failed to retrieve top sellers: {response.status_code}")
                 return []
         
-        return top_sellers
+        return self.unowned_game_library
 
-    # retrieves info for a single top seller
-    def retrieve_game_info(self, top_seller):
+    # returns list of genre tags for a game
+    def retrieve_game_tags(self, game_id):
+        url = f"{self.game_url}{game_id}"
+        response = requests.get(url)
+        
+        tags = []
+        if (response.status_code == 200):
+            soup = BeautifulSoup(response.text, 'html.parser')
+            tags = [tag.text.strip() for tag in soup.find_all("a", class_="app_tag")]
+            time.sleep(0.1)
+            return tags
+        else:
+            return []
+
+    # returns ratings, tags, and price info for a single top seller
+    def retrieve_ts_info(self, top_seller):
         url = f"{self.game_url}{top_seller['id']}"
         response = requests.get(url)
         
@@ -69,11 +94,11 @@ class SteamAPIClient:
                 rating_match = re.search(r'\d+', rating_element.text.strip())
                 rating = int(rating_match.group()) if rating_match else 0
             else:
-                rating = 0
+                rating = 70
             top_seller['rating'] = rating
 
             # get game genre tags
-            game_tags = [tag.text.strip() for tag in soup.find_all("a", class_="app_tag")]
+            game_tags = self.retrieve_game_tags(top_seller['id'])
             top_seller['tags'] = game_tags
 
             # get game price
@@ -88,12 +113,61 @@ class SteamAPIClient:
             else:
                 top_seller['price'] = 0
 
+            time.sleep(0.5)
             return top_seller
 
-    # retrieves user owned games
+    # returns a list of user owned games
     def retrieve_user_info(self, user_id):
-        # 
+        url = f"{self.api_url}/IPlayerService/GetOwnedGames/v0001/"
+        params = {
+            "key": self.api_key,
+            "steamid": user_id,
+            "include_played_free_games": 1,
+            "include_appinfo": 1,
+        }
+        response = requests.get(url, params=params)
+       
+        user_owned_games = []
+        if response.status_code == 200:
+            data = response.json().get("response", {})
+            games = data.get("games", [])
+            for game in games:
+                self.total_user_playtime += game["playtime_forever"] / 60
+                user_owned_games.append({"name": game["name"], "id": game["appid"], "playtime": game["playtime_forever"] / 60, "tags": self.retrieve_game_tags(game["appid"])}) if game["playtime_forever"] > 0 else None
+            
+            self.user_game_library = user_owned_games
+            return user_owned_games
+        else:
+            return None
 
+    # counts user genres and genre playtime
+    def count_user_genres(self):
+        for game in self.user_game_library:
+            for tag in game['tags']:
+                self.total_user_genre_count += 1
+                self.playtime_per_genre[tag] += game['playtime']
+                self.single_genre_count[tag] += 1
+
+    # ranks unowned games in order of recommendation
+    def rank_unowned_games(self):
+        for game in self.unowned_game_library:
+            if game['id'] in self.user_game_library:
+                continue
+            game_rank = 0
+            for tag in game['tags']:
+                if tag in self.playtime_per_genre:
+                    game_rank += ((self.playtime_per_genre[tag] / self.total_user_playtime) * (self.single_genre_count[tag] / self.total_user_genre_count))
+                else:
+                    continue
+
+            game_rank += (game['rating'] / 1000)
+            game['rank'] = game_rank
+        
+        self.unowned_game_library.sort(key=lambda x: x['rank'], reverse=True)
+        return self.unowned_game_library
+
+           
+                
 
 
 
@@ -108,16 +182,21 @@ def read_root():
 # get top sellers from Steam
 @app.get("/top-sellers")
 def get_top_sellers():
-    steam_api_client = SteamAPIClient("YOUR_STEAM_API_KEY_HERE")  # Replace with your actual Steam API key
+    steam_api_client = SteamAPIClient(steam_api_key)
     top_sellers = steam_api_client.retrieve_top_sellers()
     return {"top_sellers": top_sellers}
     
-@app.get("/top-seller-info")
-def get_top_seller_info():
-    steam_api_client = SteamAPIClient("YOUR_STEAM_API_KEY_HERE")  # Replace with your actual Steam API key
-    top_sellers = steam_api_client.retrieve_top_sellers()
-    ts_info = []
-    for game in top_sellers:
-        ts_info.append(steam_api_client.retrieve_game_info(game))
-    return {"top_sellers": ts_info}
+@app.get("/user-owned-games")
+def get_user_info():
+    steam_api_client = SteamAPIClient(steam_api_key)
+    user_info = steam_api_client.retrieve_user_info("76561198059049117")
+    return {"user_info": user_info}
     
+
+@app.get("/recommendations")
+def get_recommendations():
+    steam_api_client = SteamAPIClient(steam_api_key)
+    steam_api_client.retrieve_top_sellers()
+    steam_api_client.retrieve_user_info("76561198059049117")
+    recommendations = steam_api_client.rank_unowned_games()
+    return {"recommendations": recommendations}
