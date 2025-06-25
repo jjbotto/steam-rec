@@ -1,20 +1,38 @@
 import { useState } from 'react'
-import GameCard from './components/GameCard';
+import SearchBar from './components/SearchBar';
+import GameGrid, { Game } from './components/GameGrid';
 
 export default function App() {
   const [steamID, setSteamID] = useState("");
-  const [recommendations, setRecommendations] = useState([]);
+  const [recommendations, setRecommendations] = useState<Game[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isNewSearch, setIsNewSearch] = useState(true);
+  
+  const getRecommendations = async (steamID: string) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/recommendations?steam_id=${steamID}`);
+      if (!response.ok) {
+        throw new Error('Failed to retrieve recommendations');
+      }
+      const data = await response.json();
+      setIsNewSearch(false);
+      setRecommendations(data.recommendations);
+    } catch (error) {
+      console.error('Error fetching recommendations: ', error);
+    }
+    setIsLoading(false);
+  };
   
   return (
-    <div style={{ padding: "1rem" }}>
-      <h1>The Steam Recommender</h1>
-      <input
-        type="text"
-        placeholder="Enter your Steam User ID"
-        value={steamID}
-        onChange={(e) => setSteamID(e.target.value)}
+    <div>
+      <SearchBar
+        steamID={steamID}
+        onSteamIDChange={setSteamID}
+        onGetRecommendations={() => getRecommendations(steamID)}
+        isCentered={isNewSearch}
       />
-      <button onClick={() => {}}>Get Recommendations</button>
+      <GameGrid games={recommendations} />
     </div>
   );
 }

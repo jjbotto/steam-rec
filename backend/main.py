@@ -179,23 +179,12 @@ class SteamAPIClient:
         recommendations.sort(key=lambda x: x['rank'], reverse=True)
         return recommendations
 
-           
-                
-
-
-
-    
-
-
-# TEST
-
-    
 
 @app.get("/recommendations")
-def get_recommendations():
+def get_recommendations(steam_id: str):
     steam_api_client = SteamAPIClient(steam_api_key)
     steam_api_client.retrieve_top_sellers()
-    steam_api_client.retrieve_user_info("76561198059049117")
+    steam_api_client.retrieve_user_info(steam_id)
     steam_api_client.count_user_genres()
     recommendations = steam_api_client.rank_unowned_games()
     return {"recommendations": recommendations}
