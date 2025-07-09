@@ -35,12 +35,12 @@ class SteamAPIClient:
     # scrapes the top sellers page and returns a list of games
     def retrieve_top_sellers(self):
         print("Retrieving top sellers...")
-        max_pages = 4
+        max_pages = 5
         self.unowned_game_library = []
         seen_games = set()
 
         # loop through max pages of top sellers to get roughly 200 games
-        for i in range(0, max_pages):
+        for i in range(1, max_pages):
             url = f"https://store.steampowered.com/search/?filter=topsellers&page={i}"
             response = requests.get(url)
             
@@ -63,7 +63,7 @@ class SteamAPIClient:
                     seen_games.add(game_id)
 
                 print(len(self.unowned_game_library))
-                time.sleep(0.1)
+                time.sleep(0.2)
             else:
                 print(f"Failed to retrieve top sellers: {response.status_code}")
                 return []
@@ -174,7 +174,7 @@ class SteamAPIClient:
                     game_rank += ((float(self.playtime_per_genre[tag]) / self.total_user_playtime) * (float(self.single_genre_count[tag]) / self.total_user_genre_count))
             game['rank'] = game_rank
             recommendations.append(game)
-            print("Ranked game: ", game['name'], "Rank: ", game['rank'])
+            print(game)
         
         recommendations.sort(key=lambda x: x['rank'], reverse=True)
         return recommendations
@@ -186,5 +186,15 @@ def get_recommendations(steam_id: str):
     steam_api_client.retrieve_top_sellers()
     steam_api_client.retrieve_user_info(steam_id)
     steam_api_client.count_user_genres()
-    recommendations = steam_api_client.rank_unowned_games()
+    raw_recommendations = steam_api_client.rank_unowned_games()
+    recommendations = []
+    for game in raw_recommendations:
+        recommendations.append({
+            "id": game['id'],
+            "name": game['name'],
+            "rating": game['rating'],
+            "price": game['price'],
+            "image_url": game['image_url'],
+            "genres": game['tags'],
+        })
     return {"recommendations": recommendations}

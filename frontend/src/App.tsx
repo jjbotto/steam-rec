@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import SearchBar from './components/SearchBar';
-import GameGrid, { Game } from './components/GameGrid';
+import GameGrid from './components/GameGrid';
+import { Game } from './types';
 
 export default function App() {
   const [steamID, setSteamID] = useState("");
