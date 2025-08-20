@@ -11,13 +11,13 @@ export default function App() {
   
   const getRecommendations = async (steamID: string) => {
     setIsLoading(true);
+    setIsNewSearch(false);
     try {
       const response = await fetch(`http://127.0.0.1:8000/recommendations?steam_id=${steamID}`);
       if (!response.ok) {
         throw new Error('Failed to retrieve recommendations');
       }
       const data = await response.json();
-      setIsNewSearch(false);
       setRecommendations(data.recommendations);
     } catch (error) {
       console.error('Error fetching recommendations: ', error);
@@ -26,14 +26,20 @@ export default function App() {
   };
   
   return (
-    <div>
-      <SearchBar
-        steamID={steamID}
-        onSteamIDChange={setSteamID}
-        onGetRecommendations={() => getRecommendations(steamID)}
-        isCentered={isNewSearch}
-      />
-      <GameGrid games={recommendations} />
+    <div className="flex flex-col min-h-screen min-w-screen">
+      <div className={`bg-black flex flex-col items-center transition-all duration-500 min-w-screen
+                      ${isNewSearch ? "justify-center flex-1" : "justify-start mt-0"}`}>
+        <SearchBar
+          steamID={steamID}
+          onSteamIDChange={setSteamID}
+          onGetRecommendations={() => getRecommendations(steamID)}
+        />
+      </div>
+      {recommendations.length > 0 && (
+      <div>
+        <GameGrid games={recommendations} />
+      </div>
+      )}
     </div>
   );
 }

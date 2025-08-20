@@ -1,4 +1,3 @@
-import React from 'react'
 import { Properties } from 'csstype';
 import { Game } from '../types';
 
