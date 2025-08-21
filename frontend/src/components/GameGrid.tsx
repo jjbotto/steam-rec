@@ -20,7 +20,7 @@ const styles = {
 
 export default function GameGrid({ games }: GameGridProps) {
     return (
-        <div style={styles.gameGrid}>
+        <div className="grid grid-cols-2 gap-10 p-10">
             {games.map((game) => (
                 <GameCard
                     key={game.id}
@@ -28,7 +28,6 @@ export default function GameGrid({ games }: GameGridProps) {
                     rating={game.rating}
                     price={game.price}
                     image_url={game.image_url}
-                    genres={game.genres}
                 />
             ))}
         </div>

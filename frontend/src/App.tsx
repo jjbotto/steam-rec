@@ -26,17 +26,22 @@ export default function App() {
   };
   
   return (
-    <div className="flex flex-col min-h-screen min-w-screen">
-      <div className={`bg-black flex flex-col items-center transition-all duration-500 min-w-screen
-                      ${isNewSearch ? "justify-center flex-1" : "justify-start mt-0"}`}>
-        <SearchBar
-          steamID={steamID}
-          onSteamIDChange={setSteamID}
-          onGetRecommendations={() => getRecommendations(steamID)}
-        />
+    <div className="bg-black flex flex-col min-h-screen min-w-screen">
+      <div className="relative flex-1">
+        <div
+          className={`absolute left-1/2 transform -translate-x-1/2 transition-all duration-700 ease-in-out
+            ${isNewSearch ? "top-1/2 -translate-y-1/2" : "top-4 translate-y-0"}`}
+        >
+          <SearchBar
+            steamID={steamID}
+            onSteamIDChange={setSteamID}
+            onGetRecommendations={() => getRecommendations(steamID)}
+            isNewSearch={isNewSearch}
+          />
+        </div>
       </div>
       {recommendations.length > 0 && (
-      <div>
+      <div className="mt-50">
         <GameGrid games={recommendations} />
       </div>
       )}

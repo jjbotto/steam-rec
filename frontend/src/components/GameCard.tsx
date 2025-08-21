@@ -1,57 +1,18 @@
-import { Properties } from 'csstype';
 import { Game } from '../types';
 
-type GameCardProps = Omit<Game, 'id'>;
+type GameCardProps = Omit<Game, 'id' | 'genres'>;
 
-const styles: Record<string, Properties> = {
-  gameCard: {
-    backgroundColor: '#fff',
-    borderRadius: '8px',
-    padding: '1rem',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    textAlign: 'center',
-    transition: 'transform 0.2s',
-    cursor: 'pointer',
-  },
-  gameImage: {
-    width: '100%',
-    height: '200px',
-    objectFit: 'cover',
-    borderRadius: '4px',
-    marginBottom: '1rem',
-  },
-  gameTitle: {
-    fontSize: '1.2rem',
-    fontWeight: 'bold',
-    margin: '0.5rem 0',
-  },
-  gameRating: {
-    color: '#666',
-    margin: '0.5rem 0',
-  },
-  gamePrice: {
-    color: '#2ecc71',
-    fontWeight: 'bold',
-    margin: '0.5rem 0',
-  },
-  gameGenres: {
-    color: '#3498db',
-    margin: '0.5rem 0',
-  },
-};
-
-export default function GameCard({ name, rating, price, image_url, genres }: GameCardProps) {
+export default function GameCard({ name, rating, price, image_url }: GameCardProps) {
     return (
-        <div style={styles.gameCard}>
+        <div className="flex flex-col items-center gap-2 bg-blue-950/80 rounded-xl pt-5 pb-5 border-white border-2 font-mono hover:scale-110 transition-all duration-500 ease-in-out">
             <img 
+                className="rounded-xl w-3/4"
                 src={image_url} 
                 alt={name} 
-                style={styles.gameImage}
             />
-            <h2 style={styles.gameTitle}>{name}</h2>
-            <p style={styles.gameRating}>Rating: {rating}</p>
-            <p style={styles.gamePrice}>Price: ${price}</p>
-            <p style={styles.gameGenres}>Genres: {genres.join(', ')}</p>
+            <h2 className="text-white text-2xl font-bold">{name}</h2>
+            <p className="text-blue-800">Price: ${price}</p>
+            <p className="text-gray-500">Rating: {rating}</p>
         </div>
     );
 }

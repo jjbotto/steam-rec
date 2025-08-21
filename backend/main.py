@@ -35,7 +35,7 @@ class SteamAPIClient:
     # scrapes the top sellers page and returns a list of games
     def retrieve_top_sellers(self):
         print("Retrieving top sellers...")
-        max_pages = 5
+        max_pages = 3
         self.unowned_game_library = []
         seen_games = set()
 
@@ -53,8 +53,15 @@ class SteamAPIClient:
                     if game_id in seen_games:
                         continue
                     name = game.find("span", class_="title").text.strip()
-                    img_tag = game.find("img")
-                    image_url = img_tag.get('src') if img_tag else ""
+
+                    # retrieve game image
+                    game_page_url = f"{self.game_url}{game_id}"
+                    game_page_response = requests.get(game_page_url)
+                    if (game_page_response.status_code == 200):
+                        soup = BeautifulSoup(game_page_response.text, 'html.parser')
+                        img_tag = soup.find("img", class_="game_header_image_full")
+                        image_url = img_tag.get('src') if img_tag else ""
+                    
                     if name == 'Steam Deck' or name == 'Valve Index® Headset': # Skip non-games
                         continue
                     new_game = {"name": name, "id": game_id, "image_url": image_url}
