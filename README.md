@@ -1,8 +1,8 @@
-# 🎮 Steam Recommendation Engine
+# Steam Recommendation Web App
 
-A small full-stack web application that generates personalized Steam game recommendations based on a user's Steam ID.
+A small full-stack web application that generates personalized Steam game recommendations based on a user's Steam ID, game history, and playtime.
 
-Originally developed as a Python script, this app has been refactored into a scalable architecture with:
+Originally developed as a simple Python script, refactored with:
 - A **FastAPI backend** (Python)
 - A **React + TypeScript frontend** currently in progress
 
