@@ -8,7 +8,8 @@ Originally developed as a simple Python script, refactored with:
 
 ---
 
-![Screenshot](screenshots/demo.png)
+![Screenshot](screenshots/default.png)
+![Screenshot](screenshots/recommendations.png)
 
 ---
 
